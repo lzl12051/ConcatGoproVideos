@@ -11,7 +11,7 @@ def getVideoList(dir: str) -> dict[list[list, str]]:
             isG = file_name[0]
             code_type = file_name[1]
             ext_name = file_name[-3:]
-            video_chapter = file_name[2:4]
+            # video_chapter = file_name[2:4]
             video_idx = file_name[4:8]
         except IndexError:
             continue
@@ -55,10 +55,10 @@ if __name__ == "__main__":
                     chapters = videos[name][0]
                     for c in chapters:
                         file.write(f"file '{source_dir}/{c}'\n")
-                status = os.system(f"ffmpeg -f concat -safe 0 -i {name}.join -c copy ../G{name}_concat.mp4")
+                status = os.system(f"ffmpeg -f concat -safe 0 -i {name}.join -c copy ../GX01{name}.mp4")
                 if status:
                     raise OSError("Something Goes Wrong With FFmpeg.")
-                    break
+
         os.chdir(output_dir)
         shutil.rmtree('temp')
         print(
