@@ -21,6 +21,9 @@ def getVideoList(dir: str) -> dict[list[list, str]]:
                 all_videos[video_idx][0].append(file_name)
             except KeyError:
                 all_videos[video_idx] = [[file_name], code_type]
+    # sort the chapters
+    for video in all_videos.keys():
+        all_videos[video][0] = sorted(all_videos[video][0])
     return all_videos
 
 
@@ -41,7 +44,7 @@ if __name__ == "__main__":
     if pathValidation(source_dir, output_dir):
         videos = getVideoList(source_dir)
         chaptered_video_num = 0
-        # print(file_list)
+        # print(videos)
         for name in videos.keys():
             if len(videos[name][0]) > 1:
                 chaptered_video_num += 1
