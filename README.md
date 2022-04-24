@@ -5,9 +5,12 @@ The script will scan the file names ([GoPro File naming Convention](https://comm
 
 # Usage
 **FFmpeg must be installed first to use this script.**
-
+Just run the script file and it will ask you to set the source folder and output folder.
+```bash
+python3 concatGOPRO.py
 ```
+Or you could use command line interface like below:
+```bash
 python3 concatGOPRO.py input_path output_path
 ```
-
-And go check your output folder!
+Go check your output folder!
