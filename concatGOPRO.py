@@ -1,6 +1,8 @@
 import os
 import sys
 import shutil
+import PySimpleGUI as sg
+
 
 def getVideoList(dir: str) -> dict[list[list, str]]:
     all_videos = dict()
@@ -38,33 +40,45 @@ def pathValidation(source_dir, output_dir):
     return True
 
 
-if __name__ == "__main__":
-    _, source_dir, output_dir = sys.argv
-    # print(_, source_dir, output_dir)
+def doTheJob(source_dir, output_dir):
     if pathValidation(source_dir, output_dir):
         videos = getVideoList(source_dir)
         chaptered_video_num = 0
         # print(videos)
+        try:
+            os.mkdir("temp")
+        except FileExistsError:
+            pass
         for name in videos.keys():
             if len(videos[name][0]) > 1:
                 chaptered_video_num += 1
                 os.chdir(output_dir)
-                try:
-                    os.mkdir("temp")
-                except FileExistsError:
-                    pass
                 os.chdir("temp")
                 with open(f"{name}.join", 'w') as file:
                     chapters = videos[name][0]
                     for c in chapters:
                         file.write(f"file '{source_dir}/{c}'\n")
-                status = os.system(f"ffmpeg -f concat -safe 0 -i {name}.join -c copy ../GX01{name}.mp4")
+                status = os.system(
+                    f"ffmpeg -f concat -safe 0 -i {name}.join -c copy ../GX01{name}.mp4")
                 if status:
                     raise OSError("Something Goes Wrong With FFmpeg.")
 
         os.chdir(output_dir)
-        shutil.rmtree('temp')
-        print(
-            f"Detected {len(videos.keys())} videos, {chaptered_video_num} are(is) chaptered.")
+        try:
+            shutil.rmtree('temp')
+        except FileNotFoundError:
+            pass
+        sg.Window('Done', [[sg.T(f"Detected {len(videos.keys())} videos, {chaptered_video_num} are(is) chaptered.")], [
+                  sg.Ok()]], disable_close=True).read(close=True)
     else:
-        raise FileNotFoundError("Invalid Input Path")
+        sg.popup_error("Invalid Path")
+        raise FileNotFoundError("Invalid Path")
+
+
+if __name__ == "__main__":
+    try:
+        _, source_dir, output_dir = sys.argv
+        doTheJob(source_dir, output_dir)
+    except ValueError:
+        doTheJob(sg.popup_get_folder('Please enter an input path'),
+                 sg.popup_get_folder('Please enter an output path'))
