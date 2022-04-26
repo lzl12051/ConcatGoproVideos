@@ -1,12 +1,22 @@
 import os
-import sys
 import shutil
-import PySimpleGUI as sg
+import sys
+
+try:
+    import PySimpleGUI as sg
+except ImportError:
+    print("Looks like you don't have PySimpleGUI installed, do you want me to install for you?\nyes/no")
+    yes_or_no = input()
+    yes_set = {'yes', 'YES', 'Y', 'y', 'Yes'}
+    if yes_or_no in yes_set:
+        os.system('pip install pysimplegui')
+    else:
+        raise ImportWarning('No PySimpleGUI package found')
 
 
-def getVideoList(dir: str) -> dict[list[list, str]]:
+def get_video_list(dir: str):
     all_videos = dict()
-    video_formats = set(["mp4", "MP4"])
+    video_formats = {"mp4", "MP4"}
     all_files = os.listdir(dir)
     for file_name in all_files:
         try:
@@ -29,7 +39,7 @@ def getVideoList(dir: str) -> dict[list[list, str]]:
     return all_videos
 
 
-def pathValidation(source_dir, output_dir):
+def path_validation(source_dir, output_dir):
     if not os.path.isdir(source_dir):
         return False
     if not os.path.isdir(output_dir):
@@ -40,9 +50,10 @@ def pathValidation(source_dir, output_dir):
     return True
 
 
-def doTheJob(source_dir, output_dir):
-    if pathValidation(source_dir, output_dir):
-        videos = getVideoList(source_dir)
+def do_the_job(source_dir, output_dir):
+    if path_validation(source_dir, output_dir):
+        os.chdir(input_dir)
+        videos = get_video_list(source_dir)
         chaptered_video_num = 0
         # print(videos)
         try:
@@ -62,23 +73,51 @@ def doTheJob(source_dir, output_dir):
                     f"ffmpeg -f concat -safe 0 -i {name}.join -c copy ../GX01{name}.mp4")
                 if status:
                     raise OSError("Something Goes Wrong With FFmpeg.")
-
         os.chdir(output_dir)
         try:
             shutil.rmtree('temp')
         except FileNotFoundError:
             pass
-        sg.Window('Done', [[sg.T(f"Detected {len(videos.keys())} videos, {chaptered_video_num} are(is) chaptered.")], [
-                  sg.Ok()]], disable_close=True).read(close=True)
+        sg.Window('Done', [[sg.T(f"Detected {len(videos.keys())} videos, {chaptered_video_num} are(is) sliced.")], [
+            sg.Ok()]], disable_close=True).read(close=True)
     else:
-        sg.popup_error("Invalid Path")
+        sg.popup_ok("Invalid Path")
         raise FileNotFoundError("Invalid Path")
 
 
 if __name__ == "__main__":
     try:
         _, source_dir, output_dir = sys.argv
-        doTheJob(source_dir, output_dir)
+        do_the_job(source_dir, output_dir)
     except ValueError:
-        doTheJob(sg.popup_get_folder('Please enter an input path'),
-                 sg.popup_get_folder('Please enter an output path'))
+        sg.theme('SystemDefault')  # please make your windows colorful
+
+        # layout = [[sg.Text('Input Folder')],
+        #           [sg.Input(), sg.FolderBrowse()],
+        #           [sg.Text('Output Folder')],
+        #           [sg.Input(), sg.FolderBrowse()],
+        #           [sg.OK(), sg.Cancel()]]
+        layout = [[sg.Text(' Input Folder', size=(10, 1)), sg.InputText(), sg.FolderBrowse()],
+                  [sg.Text('Output Folder', size=(10, 1)), sg.InputText(), sg.FolderBrowse()],
+                  [sg.Ok(), sg.Cancel()]]
+
+        window = sg.Window('GoPro Video Concatenator', layout)
+        event, values = window.read()
+        if event == 'OK':
+            input_dir, output_dir = values[0], values[1]
+            if input_dir == output_dir:
+                event = sg.popup_yes_no("Can't output to the same folder as input, please change the output folder.\n"
+                                        "Press Yes to create an output folder")
+                if event == "Yes":
+                    os.chdir(input_dir)
+                    try:
+                        os.mkdir('Output')
+                    except FileExistsError:
+                        pass
+                    output_dir += '/Output'
+                else:
+                    window.close()
+            do_the_job(input_dir, output_dir)
+
+        elif event in (sg.WIN_CLOSED, 'Cancel'):
+            window.close()
