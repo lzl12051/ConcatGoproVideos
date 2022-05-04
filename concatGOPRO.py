@@ -24,7 +24,6 @@ def get_video_list(folder: str):
             is_g = file_name[0]
             code_type = file_name[1]
             ext_name = file_name[-3:]
-            # video_chapter = file_name[2:4]
             video_idx = file_name[4:8]
         except IndexError:
             continue
@@ -70,7 +69,6 @@ def concat_videos(source_dir, output_dir):
             if len(videos[name][0]) > 1:
                 sliced_video_num += 1
                 os.chdir(output_dir+"/temp")
-                # os.chdir("temp")
                 # create .join file which includes all chapters of the video
                 with open(f"{name}.join", 'w') as file:
                     chapters = videos[name][0]
@@ -84,7 +82,8 @@ def concat_videos(source_dir, output_dir):
             # if it is a single video file, copy to the output folder
             else:
                 print(videos)
-                shutil.copyfile(f'{source_dir}/{videos[name][0][0]}', output_dir+'/'+videos[name][0][0])
+                shutil.copyfile(
+                    f'{source_dir}/{videos[name][0][0]}', output_dir+'/'+videos[name][0][0])
         # clean temp folder
         os.chdir(output_dir)
         print(output_dir)
@@ -108,19 +107,20 @@ if __name__ == "__main__":
     # start GUI
     except ValueError:
         sg.theme('SystemDefault')  # please make your windows colorful
-        input_dir, output_dir = '', ''
+        # input_dir, output_dir = '', ''
+        layout = [[sg.Text(' Input Folder', size=(10, 1)), sg.InputText(), sg.FolderBrowse()],
+                      [sg.Text('Output Folder', size=(10, 1)), sg.InputText(), sg.FolderBrowse()],
+                      [sg.Ok()]]
+        window = sg.Window('GoPro Video Concatenation', layout)
         while True:
-            layout = [[sg.Text(' Input Folder', size=(10, 1)), sg.InputText(input_dir), sg.FolderBrowse()],
-            [sg.Text('Output Folder', size=(10, 1)), sg.InputText(output_dir), sg.FolderBrowse()],
-            [sg.Ok()]]
-            window = sg.Window('GoPro Video Concatenation', layout)
+
             event, values = window.read()
             if event == 'Ok':
                 input_dir, output_dir = values[0], values[1]
-                if input_dir and output_dir:
-                    print("pass")
+                # check if it is empty string
+                if input_dir and output_dir and path_validation(input_dir, output_dir):
                     if input_dir == output_dir:
-                        event = sg.popup_yes_no("Can't output to the same folder as input, please change the output folder.\n"
+                        event = sg.popup_yes_no("Can't output to the same folder as input, please change the output folder."
                                                 "Or press Yes to create an output folder")
                         if event == "Yes":
                             os.chdir(input_dir)
@@ -130,14 +130,11 @@ if __name__ == "__main__":
                                 pass
                             output_dir += '/Output'
                         else:
-                            window.close()
                             continue
                     concat_videos(input_dir, output_dir)
-                    break
+                    window.close()  # job done
                 else:
-                    sg.popup_ok("Please input paths")
-                    window.close()
-                
+                    sg.popup_ok("Please input valid paths")
             elif event == sg.WIN_CLOSED:
                 window.close()
                 break
